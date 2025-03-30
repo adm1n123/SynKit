@@ -8,6 +8,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
@@ -64,17 +65,20 @@ public class Main extends Application {
         TabPane rightTabPane = new TabPane();
         leftTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
         rightTabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+        
         Tab upstream = new Tab("Upstream", new Label("Nothing to show"));
-        Tab downstream1 = new Tab("Downstream1"  , new Label("Nothing to show"));
-        Tab downstream2 = new Tab("Downstream2" , new Label("Nothing to show"));
+        Tab module1 = new Tab("module1"  , new Label("Nothing to show"));
+        Tab module2 = new Tab("module2" , new Label("Nothing to show"));
 
         leftTabPane.getTabs().add(upstream);
-        rightTabPane.getTabs().add(downstream1);
-        rightTabPane.getTabs().add(downstream2);
+        rightTabPane.getTabs().addAll(module1, module2);
         
         gridPane.add(leftTabPane, 0, 0); 
         gridPane.add(rightTabPane, 1, 0);
         
+        ScrollPane upstream_scroll = new ScrollPane();
+        ScrollPane module1_scroll = new ScrollPane();
+        ScrollPane module2_scroll = new ScrollPane();
         
 		
 		return gridPane;
@@ -89,19 +93,7 @@ public class Main extends Application {
         MenuItem importMenuItem = new MenuItem("Import");
         MenuItem exportMenuItem = new MenuItem("Export");
         CheckMenuItem theme = new CheckMenuItem("Light");
-        
         fileMenu.getItems().addAll(newMenuItem, importMenuItem, exportMenuItem, theme);
-
-        Menu syncMenu = new Menu("Sync");
-        menuBar.getMenus().add(syncMenu);
-        MenuItem statsMenuItem = new MenuItem("Statistics");
-        syncMenu.getItems().add(statsMenuItem);
-        
-        Menu helpMenu = new Menu("Help");
-        menuBar.getMenus().add(helpMenu);
-        MenuItem welcomeMenuItem = new MenuItem("Welcome");
-        MenuItem aboutMenuItem = new MenuItem("About");
-        helpMenu.getItems().addAll(welcomeMenuItem, aboutMenuItem);
         
         theme.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
             if (isSelected) {
@@ -110,6 +102,20 @@ public class Main extends Application {
                 scene.getStylesheets().add(getClass().getResource("dark-theme.css").toExternalForm());
             }
         });
+        
+        Menu syncMenu = new Menu("Sync");
+        menuBar.getMenus().add(syncMenu);
+        MenuItem statsMenuItem = new MenuItem("Statistics");
+        MenuItem reportMenuItem = new MenuItem("Report");
+        syncMenu.getItems().addAll(statsMenuItem, reportMenuItem);
+        
+        Menu helpMenu = new Menu("Help");
+        menuBar.getMenus().add(helpMenu);
+        MenuItem welcomeMenuItem = new MenuItem("Welcome");
+        MenuItem aboutMenuItem = new MenuItem("About");
+        helpMenu.getItems().addAll(welcomeMenuItem, aboutMenuItem);
+        
+
         
         return menuBar;
 
