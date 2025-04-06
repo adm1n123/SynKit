@@ -3,26 +3,38 @@ package com.example.synkit;
 import javafx.application.Application;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.FileChooser;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.*;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.IOException;
+import java.awt.*;
+import java.io.*;
+import java.net.URI;
 
 public class HelloApplication extends Application {
     static VBox root;
-    Scene scene;
-    Stage stage;
+    static Scene scene;
+    static Stage stage;
+    static Tab upstreamTab;
+    static Tab module1Tab;
+    static Tab module2Tab;
+
     @Override
     public void start(Stage stage) throws IOException {
         try {
-            this.stage = stage;
+            HelloApplication.stage = stage;
             root = new VBox();
             scene = new Scene(root,1400,900);
             scene.getStylesheets().add(String.valueOf(getClass().getResource("application.css")));
@@ -35,11 +47,6 @@ public class HelloApplication extends Application {
         } catch(Exception e) {
             e.printStackTrace();
         }
-//        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
-//        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
-//        stage.setTitle("Hello!");
-//        stage.setScene(scene);
-//        stage.show();
     }
 
     public static void main(String[] args) {
@@ -47,45 +54,31 @@ public class HelloApplication extends Application {
     }
 
     void load() {
-
         MenuBar menuBar = createMenuBar();
         root.getChildren().add(menuBar);
-        GridPane gridPane = createGridPane();
-        root.getChildren().add(gridPane);
-
-
+        SplitPane splitPane = createSplitPane();
+        root.getChildren().add(splitPane);
+        VBox.setVgrow(splitPane, Priority.ALWAYS); // Make the scrollpane expand
+        splitPane.setMaxHeight(Double.MAX_VALUE); // Allow the scrollpane to grow without limit
     }
-    GridPane createGridPane() {
-        GridPane gridPane = new GridPane();
-        ColumnConstraints leftCol = new ColumnConstraints();
-        leftCol.setPercentWidth(50);
 
-        ColumnConstraints rightCol = new ColumnConstraints();
-        rightCol.setPercentWidth(50);
-        gridPane.getColumnConstraints().addAll(leftCol, rightCol);
-
-
+    SplitPane createSplitPane() {
         TabPane leftTabPane = new TabPane();
         TabPane rightTabPane = new TabPane();
         leftTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         rightTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        Tab upstream = new Tab("Upstream", new Label("Nothing to show"));
-        Tab module1 = new Tab("module1"  , new Label("Nothing to show"));
-        Tab module2 = new Tab("module2" , new Label("Nothing to show"));
+        upstreamTab = new Tab("Upstream", new Label("Nothing to show"));
+        module1Tab = new Tab("module1"  , new Label("Nothing to show"));
+        module2Tab = new Tab("module2" , new Label("Nothing to show"));
 
-        leftTabPane.getTabs().add(upstream);
-        rightTabPane.getTabs().addAll(module1, module2);
+        leftTabPane.getTabs().add(upstreamTab);
+        rightTabPane.getTabs().addAll(module1Tab, module2Tab);
 
-        gridPane.add(leftTabPane, 0, 0);
-        gridPane.add(rightTabPane, 1, 0);
+        SplitPane splitPane = new SplitPane();
+        splitPane.getItems().addAll(leftTabPane, rightTabPane);
 
-        ScrollPane upstream_scroll = new ScrollPane();
-        ScrollPane module1_scroll = new ScrollPane();
-        ScrollPane module2_scroll = new ScrollPane();
-
-
-        return gridPane;
+        return splitPane;
     }
 
 
@@ -127,17 +120,107 @@ public class HelloApplication extends Application {
         MenuItem welcomeMenuItem = new MenuItem("Welcome");
         MenuItem aboutMenuItem = new MenuItem("About");
         helpMenu.getItems().addAll(welcomeMenuItem, aboutMenuItem);
-
-
-
         return menuBar;
-
     }
 
+
+
+
     void populateCommits(File[] files) {
-        for (int i = 0; i < 3; i++) {
-            System.out.println(files[i].getName());
+        ScrollPane upstreamScroll = new ScrollPane();
+        ScrollPane module1Scroll = new ScrollPane();
+        ScrollPane module2Scroll = new ScrollPane();
+
+        upstreamTab.setContent(upstreamScroll);
+        module1Tab.setContent(module1Scroll);
+        module2Tab.setContent(module2Scroll);
+
+        UpstreamModel um = new UpstreamModel();
+        um.parseCommits(files[0]);
+        displayUpstreamCommits(um, upstreamScroll);
+
+        ModuleModel mm1 = new ModuleModel();
+        if(files[1] != null) {
+            mm1.parseCommits(files[1]);
+            displayModuleCommits(mm1, module1Scroll);
         }
+        ModuleModel mm2 = new ModuleModel();
+        if(files[2] != null) {
+            mm2.parseCommits(files[2]);
+            displayModuleCommits(mm2, module2Scroll);
+        }
+    }
+
+    void displayUpstreamCommits(UpstreamModel um, ScrollPane pane) {
+        VBox vbPane = new VBox();
+        pane.setContent(vbPane);
+
+        for (int i = 0; i < um.commits.size(); i++) {
+            Commit c = um.commits.get(i);
+            System.out.println(um.commits.get(i).toString());
+            GridPane gp = new GridPane();
+            gp.setPadding(new Insets(20, 5, 20, 5));
+            gp.setVgap(3);
+            gp.setHgap(5);
+            gp.setAlignment(Pos.CENTER);
+
+
+            Label date = new Label();
+            Label author = new Label();
+            Hyperlink message = new Hyperlink();
+            Text desc = new Text();
+
+            date.setText(c.date);
+            author.setText(c.author);
+            message.setText(c.message.substring(0, Math.min(c.message.length(), 64)));
+
+            Button cherry = new Button("Cherry-Pick");
+            Button reset = new Button("Reset");
+            Button skip = new Button("Skip");
+            Button synced = new Button("Synced");
+            Button copy = new Button("Copy");
+
+            gp.add(date, 0, 0);
+            GridPane.setColumnSpan(date, 4);
+            gp.add(skip, 4, 0);
+            gp.add(synced, 5, 0);
+            gp.add(reset, 6, 0);
+            gp.add(cherry, 7, 0);
+            gp.add(copy, 8, 0);
+
+            gp.add(message, 0, 1);
+            GridPane.setColumnSpan(message, 8);
+            gp.add(author, 4, 2);
+            GridPane.setColumnSpan(author, 4);
+
+            vbPane.getChildren().add(gp);
+
+            copy.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    ClipboardContent content = new ClipboardContent();
+                    content.putString(c.ID);
+                    Clipboard clipboard = Clipboard.getSystemClipboard();
+                    clipboard.setContent(content);
+                }
+            });
+
+            message.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    try {
+                        // Open a URL in the default browser
+                        Desktop.getDesktop().browse(new URI("https://github.com/Samsung/TizenRT/commit/"+c.ID)); // Replace with your desired URL
+                    } catch (IOException | java.net.URISyntaxException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+
+    }
+    void displayModuleCommits(ModuleModel mm, ScrollPane pane) {
+
     }
 
 }

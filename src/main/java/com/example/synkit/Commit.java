@@ -1,12 +1,17 @@
 package com.example.synkit;
 
 
+import java.io.*;
+
 class Commit {
 	String ID = null;
 	String message = null;
 	String description = null;
 	String author = null;
-	
+	String date = null;
+
+
+
 	enum Status {
 		NONE,		// GREY
 		SUCCESS,	// GREEN
@@ -41,5 +46,12 @@ class Commit {
 	}
 	void setAuthor(String author) {
 		this.author = author;
+	}
+	String getDate() {return date;}
+	void setDate(String date) {this.date = date;}
+
+	@Override
+	public String toString() {
+		return "["+this.ID+", "+this.author+", "+this.date+", \n"+this.message+"\n"+this.description+"]";
 	}
 }
