@@ -9,6 +9,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -43,6 +45,18 @@ public class UploadView {
 
         GridPane gridPane = new GridPane();
         root.getChildren().add(gridPane);
+
+        Label dummy = new Label("  ");
+        Label lbl = new Label(" Run below command to get the git log history:");
+        Label cmd = new Label(" > git --no-pager log HEAD ^commit_hash > log.txt   ");
+        Button copy = new Button("Copy");
+
+        GridPane bottomGP = new GridPane();
+        root.getChildren().add(bottomGP);
+        bottomGP.add(dummy, 0, 0);
+        bottomGP.add(lbl, 0, 1);
+        bottomGP.add(cmd, 0, 2);
+        bottomGP.add(copy, 8, 2);
 
         gridPane.setMinSize(400, 200);
 
@@ -139,7 +153,15 @@ public class UploadView {
             }
         });
 
-
+        copy.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                ClipboardContent content = new ClipboardContent();
+                content.putString("git --no-pager log HEAD ^commit_hash > log.txt");
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                clipboard.setContent(content);
+            }
+        });
 
 
 
