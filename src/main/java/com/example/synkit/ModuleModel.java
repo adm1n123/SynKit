@@ -15,6 +15,7 @@ class ModuleModel {
 		commit.setMessage(message);
 		commit.setDescription(description);
 		commit.setAuthor(author);
+		commit.setDate(date);
 		commits.add(commit);
 	}
 

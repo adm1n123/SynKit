@@ -4,8 +4,19 @@ import java.io.*;
 import java.util.ArrayList;
 
 class UpstreamModel {
-	
+	class Index {
+		int module;
+		float Vval;
+
+		Index() {
+			this.module = -1; // 0-module1, 1-module2
+			this.Vval = -1;
+		}
+	}
+
 	ArrayList<Commit> commits = new ArrayList<Commit>();
+	ArrayList<Index> indices = new ArrayList<Index>();
+
 	
 	void appendCommit(String ID, String message, String description, String author, String date) {
 		Commit commit = new Commit();
@@ -15,6 +26,7 @@ class UpstreamModel {
 		commit.setAuthor(author);
 		commit.setDate(date);
 		commits.add(commit);
+		indices.add(new Index());
 	}
 
 	void parseCommits(File file) {

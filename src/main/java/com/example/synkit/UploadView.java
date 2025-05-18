@@ -71,7 +71,11 @@ public class UploadView {
         upstreamBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
+                String userHome = System.getProperty("user.home")+"\\Downloads";
+                File userHomeDir = new File(userHome);
+
                 FileChooser fileChooser = new FileChooser();
+                fileChooser.setInitialDirectory(userHomeDir);
                 fileChooser.setTitle("Upstream Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 upstreamLbl_h.setText(selectedFile.getName());
@@ -81,7 +85,10 @@ public class UploadView {
         module1Btn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
+                String userHome = System.getProperty("user.home")+"\\Downloads";
+                File userHomeDir = new File(userHome);
                 FileChooser fileChooser = new FileChooser();
+                fileChooser.setInitialDirectory(userHomeDir);
                 fileChooser.setTitle("Module1 Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 module1Lbl_h.setText(selectedFile.getName());
@@ -91,7 +98,10 @@ public class UploadView {
         module2Btn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
+                String userHome = System.getProperty("user.home")+"\\Downloads";
+                File userHomeDir = new File(userHome);
                 FileChooser fileChooser = new FileChooser();
+                fileChooser.setInitialDirectory(userHomeDir);
                 fileChooser.setTitle("Module2 Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 module2Lbl_h.setText(selectedFile.getName());
