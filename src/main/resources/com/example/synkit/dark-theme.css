@@ -35,3 +35,11 @@
     -fx-border-width: 1px;
 }
 
+.hyperlink {
+    -fx-text-fill: #00FFFF; /* Bright cyan or light blue */
+}
+
+/* Optional: Hover effect */
+.hyperlink:hover {
+    -fx-text-fill: #008080; /* Darker cyan or blue */
+}

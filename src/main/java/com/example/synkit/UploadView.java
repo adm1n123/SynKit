@@ -9,6 +9,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -44,6 +46,18 @@ public class UploadView {
         GridPane gridPane = new GridPane();
         root.getChildren().add(gridPane);
 
+        Label dummy = new Label("  ");
+        Label lbl = new Label(" Run below command to get the git log history:");
+        Label cmd = new Label(" > git --no-pager log HEAD ^commit_hash > log.txt   ");
+        Button copy = new Button("Copy");
+
+        GridPane bottomGP = new GridPane();
+        root.getChildren().add(bottomGP);
+        bottomGP.add(dummy, 0, 0);
+        bottomGP.add(lbl, 0, 1);
+        bottomGP.add(cmd, 0, 2);
+        bottomGP.add(copy, 8, 2);
+
         gridPane.setMinSize(400, 200);
 
         //Setting the padding
@@ -71,7 +85,11 @@ public class UploadView {
         upstreamBtn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
+                String userHome = System.getProperty("user.home")+"\\Downloads";
+                File userHomeDir = new File(userHome);
+
                 FileChooser fileChooser = new FileChooser();
+                fileChooser.setInitialDirectory(userHomeDir);
                 fileChooser.setTitle("Upstream Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 upstreamLbl_h.setText(selectedFile.getName());
@@ -81,7 +99,10 @@ public class UploadView {
         module1Btn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
+                String userHome = System.getProperty("user.home")+"\\Downloads";
+                File userHomeDir = new File(userHome);
                 FileChooser fileChooser = new FileChooser();
+                fileChooser.setInitialDirectory(userHomeDir);
                 fileChooser.setTitle("Module1 Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 module1Lbl_h.setText(selectedFile.getName());
@@ -91,7 +112,10 @@ public class UploadView {
         module2Btn.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
+                String userHome = System.getProperty("user.home")+"\\Downloads";
+                File userHomeDir = new File(userHome);
                 FileChooser fileChooser = new FileChooser();
+                fileChooser.setInitialDirectory(userHomeDir);
                 fileChooser.setTitle("Module2 Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 module2Lbl_h.setText(selectedFile.getName());
@@ -104,7 +128,7 @@ public class UploadView {
         done.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                if(uploadedFiles[0] == null || uploadedFiles[1] == null && uploadedFiles[2] == null) {
+                if(uploadedFiles[0] == null && uploadedFiles[1] == null && uploadedFiles[2] == null) { // TODO: replace first && with ||
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Info");
                     alert.setHeaderText("Please select files");
@@ -129,7 +153,15 @@ public class UploadView {
             }
         });
 
-
+        copy.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                ClipboardContent content = new ClipboardContent();
+                content.putString("git --no-pager log HEAD ^commit_hash > log.txt");
+                Clipboard clipboard = Clipboard.getSystemClipboard();
+                clipboard.setContent(content);
+            }
+        });
 
 
 
