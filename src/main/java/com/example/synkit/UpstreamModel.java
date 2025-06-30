@@ -35,7 +35,11 @@ class UpstreamModel {
 			String line = br.readLine();
 			while (line != null && line.matches("commit [a-z0-9]{40}")) {
 				String hash = line.split(" ")[1];
-				String author = br.readLine().split(": ")[1];
+				String ln = br.readLine();
+				if ("Merge".equals(ln.split(":")[0])) {
+					ln = br.readLine();
+				}
+				String author = ln.split(": ")[1];
 				String date = br.readLine().split(": {3}")[1];
 				br.readLine(); //skip empty line
 				String message = br.readLine().strip();

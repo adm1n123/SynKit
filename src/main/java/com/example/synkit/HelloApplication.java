@@ -47,7 +47,7 @@ public class HelloApplication extends Application {
         try {
             HelloApplication.stage = stage;
             root = new VBox();
-            scene = new Scene(root,1400,900);
+            scene = new Scene(root,1400,768);
             scene.getStylesheets().add(String.valueOf(getClass().getResource("application.css")));
             scene.getStylesheets().add(String.valueOf(getClass().getResource("dark-theme.css")));
             stage.setScene(scene);
@@ -150,11 +150,13 @@ public class HelloApplication extends Application {
         um.parseCommits(files[0]);
 
         ModuleModel mm1 = new ModuleModel();
+        mm1.moduleNo = 1;
         if(files[1] != null) {
             mm1.parseCommits(files[1]);
             setIndex(um, mm1, 0);
         }
         ModuleModel mm2 = new ModuleModel();
+        mm2.moduleNo = 2;
         if(files[2] != null) {
             mm2.parseCommits(files[2]);
             setIndex(um, mm2, 1);
@@ -343,6 +345,19 @@ public class HelloApplication extends Application {
             GridPane.setColumnSpan(author, 12);
 
             vbPane.getChildren().add(gp);
+
+            message.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    try {
+                        // Open a URL in the default browser
+                        String module = mm.moduleNo == 1?"Kernel": "TR_Utils";
+                        Desktop.getDesktop().browse(new URI("https://github.ecodesamsung.com/TizenRT/"+module+"/commit/"+c.ID)); // Replace with your desired URL
+                    } catch (IOException | java.net.URISyntaxException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
     }
 }
