@@ -128,7 +128,7 @@ public class UploadView {
         done.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent actionEvent) {
-                if(uploadedFiles[0] == null && uploadedFiles[1] == null && uploadedFiles[2] == null) { // TODO: replace first && with ||
+                if(uploadedFiles[0] == null || uploadedFiles[1] == null && uploadedFiles[2] == null) {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Info");
                     alert.setHeaderText("Please select files");

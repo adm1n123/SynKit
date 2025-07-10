@@ -98,11 +98,12 @@ public class HelloApplication extends Application {
         Menu fileMenu = new Menu("File");
         menuBar.getMenus().add(fileMenu);
         MenuItem newMenuItem = new MenuItem("New");
+        MenuItem connectMenuItem = new MenuItem("Connect SSH");
         MenuItem uploadMenuItem = new MenuItem("Upload");
         MenuItem importMenuItem = new MenuItem("Import");
         MenuItem exportMenuItem = new MenuItem("Export");
         CheckMenuItem theme = new CheckMenuItem("Light");
-        fileMenu.getItems().addAll(newMenuItem, uploadMenuItem, importMenuItem, exportMenuItem, theme);
+        fileMenu.getItems().addAll(newMenuItem, connectMenuItem, uploadMenuItem, importMenuItem, exportMenuItem, theme);
 
         theme.selectedProperty().addListener((obs, wasSelected, isSelected) -> {
             if (isSelected) {
@@ -117,6 +118,13 @@ public class HelloApplication extends Application {
             public void handle(ActionEvent actionEvent) {
                 UploadView uv = new UploadView();
                 uv.showUploadView(stage.getScene().getStylesheets());
+            }
+        });
+        connectMenuItem.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                ConnectSSHView uv = new ConnectSSHView();
+                uv.showSSHSettings(stage.getScene().getStylesheets());
             }
         });
 
