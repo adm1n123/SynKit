@@ -36,7 +36,7 @@ class UpstreamModel {
 			while (line != null && line.matches("commit [a-z0-9]{40}")) {
 				String hash = line.split(" ")[1];
 				String ln = br.readLine();
-				if ("Merge".equals(ln.split(":")[0])) {
+				if ("Merge".equals(ln.split(":")[0])) { // skip the merge header.
 					ln = br.readLine();
 				}
 				String author = ln.split(": ")[1];

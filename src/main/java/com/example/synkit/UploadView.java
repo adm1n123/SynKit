@@ -32,9 +32,9 @@ public class UploadView {
         stage.show();
         stage.setTitle("Upload");
 
-        Label upstreamLbl = new Label("Upstream");
-        Label module1Lbl = new Label("Module1");
-        Label module2Lbl = new Label("Module2");
+        Label upstreamLbl = new Label("Public");
+        Label module1Lbl = new Label("Kernel");
+        Label module2Lbl = new Label("TR_Utils");
         Label upstreamLbl_h = new Label("");
         Label module1Lbl_h = new Label("");
         Label module2Lbl_h = new Label("");
@@ -90,7 +90,7 @@ public class UploadView {
 
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setInitialDirectory(userHomeDir);
-                fileChooser.setTitle("Upstream Commits");
+                fileChooser.setTitle("Public Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 upstreamLbl_h.setText(selectedFile.getName());
                 uploadedFiles[0] = selectedFile;
@@ -103,7 +103,7 @@ public class UploadView {
                 File userHomeDir = new File(userHome);
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setInitialDirectory(userHomeDir);
-                fileChooser.setTitle("Module1 Commits");
+                fileChooser.setTitle("Kernel Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 module1Lbl_h.setText(selectedFile.getName());
                 uploadedFiles[1] = selectedFile;
@@ -116,7 +116,7 @@ public class UploadView {
                 File userHomeDir = new File(userHome);
                 FileChooser fileChooser = new FileChooser();
                 fileChooser.setInitialDirectory(userHomeDir);
-                fileChooser.setTitle("Module2 Commits");
+                fileChooser.setTitle("TR_Utils Commits");
                 File selectedFile = fileChooser.showOpenDialog(stage);
                 module2Lbl_h.setText(selectedFile.getName());
                 uploadedFiles[2] = selectedFile;
@@ -132,7 +132,7 @@ public class UploadView {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Info");
                     alert.setHeaderText("Please select files");
-                    alert.setContentText("Upstream and Module1/Module2 files are required");
+                    alert.setContentText("Public and Kernel/TR_Utils files are required");
                     alert.showAndWait();
                 } else {
                     stage.close();

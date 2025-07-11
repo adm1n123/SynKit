@@ -16,12 +16,19 @@ class Commit {
 		NONE,		// GRAY
 		SUCCESS,	// GREEN
 		FAILED,		// RED
-		MANUAL		// YELLOW
+		MANUAL		// ORANGE
 	}
-	
-	Status cherryPick = Status.NONE; 
+
+	enum Sync {
+		NO,		// GRAY
+		YES,	// GREEN
+		MARK	// ORANGE
+	}
+
+	Status cherryPick = Status.NONE;
+	boolean cherry2 = false;
 	boolean skip = false;
-	boolean synced = false;
+	Sync synced = Sync.NO;
 	
 	String getID() {
 		return ID;

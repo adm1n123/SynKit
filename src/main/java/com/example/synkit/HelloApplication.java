@@ -29,7 +29,18 @@ import java.awt.*;
 import java.io.*;
 import java.net.URI;
 
+import com.example.synkit.ConnectSSHView.CommandStatus;
+
 public class HelloApplication extends Application {
+
+    static String KERNEL_DIR = "Kernel";
+    static String TR_UTILS_DIR = "TR_Utils";
+    static String KERNEL_SYNC = "kernel_sync";
+    static String TR_UTILS_SYNC = "tr_utils_sync";
+    static String KERNEL_BASE = "main";
+    static String TR_UTILS_BASE = "main";
+    static boolean sync_init = true;
+
     static VBox root;
     static Scene scene;
     static Stage stage;
@@ -79,9 +90,9 @@ public class HelloApplication extends Application {
         leftTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         rightTabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        upstreamTab = new Tab("Upstream", new Label("Nothing to show"));
-        module1Tab = new Tab("module1"  , new Label("Nothing to show"));
-        module2Tab = new Tab("module2" , new Label("Nothing to show"));
+        upstreamTab = new Tab("Public", new Label("Nothing to show"));
+        module1Tab = new Tab(KERNEL_DIR  , new Label("Nothing to show"));
+        module2Tab = new Tab(TR_UTILS_DIR , new Label("Nothing to show"));
 
         leftTabPane.getTabs().add(upstreamTab);
         rightTabPane.getTabs().addAll(module1Tab, module2Tab);
@@ -98,7 +109,7 @@ public class HelloApplication extends Application {
         Menu fileMenu = new Menu("File");
         menuBar.getMenus().add(fileMenu);
         MenuItem newMenuItem = new MenuItem("New");
-        MenuItem connectMenuItem = new MenuItem("Connect SSH");
+        MenuItem connectMenuItem = new MenuItem("Connect");
         MenuItem uploadMenuItem = new MenuItem("Upload");
         MenuItem importMenuItem = new MenuItem("Import");
         MenuItem exportMenuItem = new MenuItem("Export");
@@ -190,7 +201,7 @@ public class HelloApplication extends Application {
                 if(check[j]) continue;
                 if(um.commits.get(i).message.equals(mm.commits.get(j).message)) {
                     check[j] = true;
-                    um.commits.get(i).synced = true;
+                    um.commits.get(i).synced = Commit.Sync.YES;
                     um.indices.get(i).module = idx;
                     um.indices.get(i).Vval = j/count;
                 }
@@ -209,7 +220,7 @@ public class HelloApplication extends Application {
             GridPane gp = new GridPane();
             gp.setPadding(new Insets(20, 5, 20, 5));
             gp.setVgap(3);
-            gp.setHgap(3);
+            gp.setHgap(5);
             gp.setAlignment(Pos.BASELINE_LEFT);
 
 
@@ -225,18 +236,23 @@ public class HelloApplication extends Application {
 
             Button cherry = new Button("Cherry-Pick");
             cherry.setUserData(0);
+            Button cherry2 = new Button("TR");
+            cherry2.setUserData(0);
             Button skip = new Button("Skip");
             skip.setUserData(0);
             Button synced = new Button("Synced");
             Button copy = new Button("Copy");
             Button show = new Button("Show");
+            show.setDisable(true);  // disabled and enable only when synced.
 
+            HBox cherryBox = new HBox();
+            cherryBox.getChildren().addAll(cherry, cherry2);
 
             gp.add(date, 0, 0);
             GridPane.setColumnSpan(date, 7);
             gp.add(skip, 7, 0);
             gp.add(synced, 8, 0);
-            gp.add(cherry, 9, 0);
+            gp.add(cherryBox, 9, 0);
             gp.add(copy, 10, 0);
             gp.add(show, 11, 0);
 
@@ -247,19 +263,55 @@ public class HelloApplication extends Application {
 
             vbPane.getChildren().add(gp);
 
-            if (c.synced) {
+            if (c.synced == Commit.Sync.YES) {
                 synced.setStyle("-fx-background-color: green;");
+//                synced.setDisable(true);
+                skip.setDisable(true);
+                cherry.setDisable(true);
+                cherry2.setDisable(true);
+                show.setDisable(false);
             }
 
             skip.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
-                    if ((Integer)skip.getUserData() == 0) {
-                        skip.setStyle("-fx-background-color: green;");
-                        skip.setUserData(1);
+                    if (c.synced != Commit.Sync.NO || c.cherryPick != Commit.Status.NONE) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Info");
+                        alert.setHeaderText("Existing Sync/Cherry-Pick status");
+                        alert.setContentText("Please reset above status first");
+                        alert.showAndWait();
+                        return;
+                    }
+                    if (!c.skip) {
+                        skip.setStyle("-fx-background-color: orange;");
+                        c.skip = true;
                     } else {
                         skip.setStyle(null);
-                        skip.setUserData(0);
+                        c.skip = false;
+                    }
+                }
+            });
+
+            synced.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    if (c.synced == Commit.Sync.YES)
+                        return;
+                    if (c.skip || c.cherryPick != Commit.Status.NONE) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Info");
+                        alert.setHeaderText("Existing Skip/Cherry-Pick status");
+                        alert.setContentText("Please reset above status first");
+                        alert.showAndWait();
+                        return;
+                    }
+                    if (c.synced == Commit.Sync.NO) {
+                        synced.setStyle("-fx-background-color: orange;");
+                        c.synced = Commit.Sync.MARK;
+                    } else if (c.synced == Commit.Sync.MARK) {
+                        synced.setStyle(null);
+                        c.synced = Commit.Sync.NO;
                     }
                 }
             });
@@ -267,13 +319,15 @@ public class HelloApplication extends Application {
             cherry.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent actionEvent) {
-                    if ((Integer)cherry.getUserData() == 0) {
-                        cherry.setStyle("-fx-background-color: green;");
-                        cherry.setUserData(1);
-                    } else {
-                        cherry.setStyle(null);
-                        cherry.setUserData(0);
-                    }
+                    cherryPick(c, false, cherry, cherry2);
+
+                }
+            });
+
+            cherry2.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    cherryPick(c, true, cherry, cherry2);
                 }
             });
 
@@ -285,18 +339,6 @@ public class HelloApplication extends Application {
                     content.putString(c.ID);
                     Clipboard clipboard = Clipboard.getSystemClipboard();
                     clipboard.setContent(content);
-                }
-            });
-
-            message.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent actionEvent) {
-                    try {
-                        // Open a URL in the default browser
-                        Desktop.getDesktop().browse(new URI("https://github.com/Samsung/TizenRT/commit/"+c.ID)); // Replace with your desired URL
-                    } catch (IOException | java.net.URISyntaxException e) {
-                        e.printStackTrace();
-                    }
                 }
             });
 
@@ -316,9 +358,180 @@ public class HelloApplication extends Application {
                     }
                 });
             }
+
+            message.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent actionEvent) {
+                    try {
+                        // Open a URL in the default browser
+                        Desktop.getDesktop().browse(new URI("https://github.com/Samsung/TizenRT/commit/"+c.ID)); // Replace with your desired URL
+                    } catch (IOException | java.net.URISyntaxException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
         }
 
     }
+
+    void cherryPick(Commit c, boolean pressedCherry2, Button btnCherry, Button btnCherry2) {
+        if (c.skip || c.synced != Commit.Sync.NO) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Info");
+            alert.setHeaderText("Existing Skip/Synced status");
+            alert.setContentText("Please reset above status first");
+            alert.showAndWait();
+            return;
+        }
+
+        if (ConnectSSHView.session == null) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Info");
+            alert.setHeaderText("No SSH connection");
+            alert.setContentText("Please connect to remote.");
+            alert.showAndWait();
+            return;
+        }
+
+        if (c.cherryPick == Commit.Status.NONE) {
+            ConnectSSHView ssh = new ConnectSSHView();
+            String repo = !pressedCherry2? KERNEL_DIR: TR_UTILS_DIR;
+            String cmdCD = "cd "+repo+";";
+            String cmdReset = "git reset --hard HEAD;";
+            String cmdCheckout = "git checkout "+ (!pressedCherry2? KERNEL_SYNC: TR_UTILS_SYNC) +";";
+            String cmdCherry = "git cherry-pick "+c.ID+";";
+            String cmdAbort = "git cherry-pick --abort";
+
+            if(sync_init) {
+                System.out.println("Creating Sync branches");
+                ssh.executeCommand("cd "+KERNEL_DIR+";"+cmdReset+"git checkout "+KERNEL_BASE+"; git checkout -b "+KERNEL_SYNC); // create branch
+                ssh.executeCommand("cd "+KERNEL_DIR+";git checkout "+KERNEL_SYNC+"; git reset --hard "+KERNEL_BASE);    // update branch
+                ssh.executeCommand("cd "+TR_UTILS_DIR+";"+cmdReset+"git checkout "+TR_UTILS_BASE+"; git checkout -b "+TR_UTILS_SYNC); // create branch
+                ssh.executeCommand("cd "+TR_UTILS_DIR+";git checkout "+TR_UTILS_SYNC+"; git reset --hard "+TR_UTILS_BASE); // update branch
+                sync_init = false;
+                System.out.println("Sync branches ready.");
+                System.out.println("In "+KERNEL_DIR+" module "+KERNEL_SYNC+" checkout from "+KERNEL_BASE);
+                System.out.println("In "+TR_UTILS_DIR+" module "+TR_UTILS_SYNC+" checkout from "+TR_UTILS_BASE);
+            }
+
+            ssh.executeCommand(cmdCD+cmdReset+cmdCheckout);
+            CommandStatus cmdStatus = ssh.executeCommand(cmdCD+cmdCherry);
+
+            if (cherrySuccess(cmdStatus)) {
+                if (!pressedCherry2) {
+                    c.cherryPick = Commit.Status.SUCCESS;
+                    btnCherry.setStyle("-fx-background-color: green;");
+                } else {
+                    c.cherryPick = Commit.Status.SUCCESS;
+                    c.cherry2 = true;
+                    btnCherry.setStyle("-fx-background-color: green;");
+                    btnCherry2.setStyle("-fx-background-color: green;");
+                }
+            } else {
+                ssh.executeCommand(cmdCD+cmdAbort);
+                if (!pressedCherry2) {
+                    c.cherryPick = Commit.Status.FAILED;
+                    btnCherry.setStyle("-fx-background-color: red;");
+                } else {
+                    c.cherryPick = Commit.Status.FAILED;
+                    c.cherry2 = true;
+                    btnCherry.setStyle("-fx-background-color: red;");
+                    btnCherry2.setStyle("-fx-background-color: red;");
+                }
+            }
+
+        } else if (c.cherryPick == Commit.Status.SUCCESS || c.cherryPick == Commit.Status.MANUAL) {
+            if (!c.cherry2) {   // kernel
+                if (commitExist(c, KERNEL_DIR)) { // commit already exist
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Info");
+                    alert.setHeaderText("Already cherry-picked");
+                    alert.setContentText("Remove commit from "+KERNEL_DIR+" to change status");
+                    alert.showAndWait();
+                } else {
+                    c.cherryPick = Commit.Status.NONE;
+                    btnCherry.setStyle(null);
+                }
+            } else { // TR_Utils
+                if (commitExist(c, TR_UTILS_DIR)) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Info");
+                    alert.setHeaderText("Already cherry-picked");
+                    alert.setContentText("Remove commit from "+TR_UTILS_DIR+" to change status");
+                    alert.showAndWait();
+                } else {
+                    c.cherryPick = Commit.Status.NONE;
+                    c.cherry2 = false;
+                    btnCherry.setStyle(null);
+                    btnCherry2.setStyle(null);
+                }
+            }
+        } else if (c.cherryPick == Commit.Status.FAILED) {
+            if (!c.cherry2) {
+                if (commitExist(c, KERNEL_DIR)) { // commit already exist
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Info");
+                    alert.setHeaderText("Found manual cherry-pick in "+KERNEL_DIR);
+                    alert.showAndWait();
+                    c.cherryPick = Commit.Status.MANUAL;
+                    btnCherry.setStyle("-fx-background-color: orange;");
+                } else {
+                    c.cherryPick = Commit.Status.NONE;
+                    btnCherry.setStyle(null);
+                }
+            } else {
+                if (commitExist(c, TR_UTILS_DIR)) {
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Info");
+                    alert.setHeaderText("Found manual cherry-pick in "+TR_UTILS_DIR);
+                    alert.showAndWait();
+                    c.cherryPick = Commit.Status.MANUAL;
+                    btnCherry.setStyle("-fx-background-color: orange;");
+                    btnCherry2.setStyle("-fx-background-color: orange;");
+                } else {
+                    c.cherryPick = Commit.Status.NONE;
+                    c.cherry2 = false;
+                    btnCherry.setStyle(null);
+                    btnCherry2.setStyle(null);
+                }
+            }
+        }
+    }
+
+    boolean commitExist(Commit c, String dir) {
+
+        return false;
+    }
+
+    boolean cherrySuccess(CommandStatus cmdStatus) {
+        if (cmdStatus.exitStatus == 0) { // success
+            if (cmdStatus.output.contains("file changed,")) {
+                return true;
+            }
+        } else if (cmdStatus.exitStatus == 1) {
+            if (cmdStatus.output.contains("nothing to commit, working tree clean")) {
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setTitle("Success");
+                alert.setHeaderText("Changes already exist");
+                alert.setContentText("Please mark as synced.");
+                alert.showAndWait();
+            } else if (cmdStatus.output.contains("\nCONFLICT")) {
+                Alert alert = new Alert(AlertType.INFORMATION);
+                alert.setTitle("Error");
+                alert.setHeaderText("Merge Conflict");
+                alert.setContentText("After resolving click button again to mark as manual cherry-pick");
+                alert.showAndWait();
+            }
+        } else if (cmdStatus.exitStatus == 128) {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText("Commit not found.");
+            alert.showAndWait();
+            return false;
+        }
+        return false;
+    }
+
     void displayModuleCommits(ModuleModel mm, ScrollPane pane) {
         VBox vbPane = new VBox();
         pane.setContent(vbPane);
@@ -359,7 +572,7 @@ public class HelloApplication extends Application {
                 public void handle(ActionEvent actionEvent) {
                     try {
                         // Open a URL in the default browser
-                        String module = mm.moduleNo == 1?"Kernel": "TR_Utils";
+                        String module = mm.moduleNo == 1?KERNEL_DIR: TR_UTILS_DIR;
                         Desktop.getDesktop().browse(new URI("https://github.ecodesamsung.com/TizenRT/"+module+"/commit/"+c.ID)); // Replace with your desired URL
                     } catch (IOException | java.net.URISyntaxException e) {
                         e.printStackTrace();

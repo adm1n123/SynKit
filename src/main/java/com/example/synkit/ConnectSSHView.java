@@ -18,8 +18,18 @@ import java.io.InputStream;
 import java.util.List;
 
 public class ConnectSSHView {
-    Session session = null;
-    String conanDir = null;
+    static Session session = null;
+    static String conanDir = null;
+
+    static class CommandStatus {
+        int exitStatus;
+        String output;
+
+        CommandStatus(int exitStatus, String output) {
+            this.exitStatus = exitStatus;
+            this.output = output;
+        }
+    }
 
     void showSSHSettings(List<String> stylesheets) {
         Stage stage = new Stage();
@@ -39,7 +49,7 @@ public class ConnectSSHView {
         portLabel.setStyle("-fx-font-weight: bold;");
         Label passLabel = new Label("Password:");
         passLabel.setStyle("-fx-font-weight: bold;");
-        Label dirLabel = new Label("conan dir:");
+        Label dirLabel = new Label("Conan Dir:");
         dirLabel.setStyle("-fx-font-weight: bold;");
 
         TextField userField = new TextField("test");
@@ -140,13 +150,16 @@ public class ConnectSSHView {
         return false;
     }
 
-    public String executeCommand(String command) {
+    public CommandStatus executeCommand(String command) {
         StringBuilder output = new StringBuilder();
         ChannelExec channel = null;
+        CommandStatus cmdStatus = new CommandStatus(-1, null);
         try {
             // Open a new channel to execute commands
+            String cmd = "cd "+conanDir+";"+command;
+            System.out.println("Executing command: "+cmd);
             channel = (ChannelExec) session.openChannel("exec");
-            channel.setCommand("cd "+conanDir+";"+command);
+            channel.setCommand(cmd);
             channel.setInputStream(null);
             channel.setErrStream(System.err); //  Redirect error stream to standard error
 
@@ -166,6 +179,7 @@ public class ConnectSSHView {
                     System.out.println(new String(buffer, 0, i));
                 }
                 if (channel.isClosed()) {
+                    cmdStatus.exitStatus = channel.getExitStatus();
                     System.out.println("Exit Status: " + channel.getExitStatus());
                     break;
                 }
@@ -185,6 +199,7 @@ public class ConnectSSHView {
                 channel.disconnect();
             }
         }
-        return output.toString();
+        cmdStatus.output = output.toString();
+        return cmdStatus;
     }
 }
