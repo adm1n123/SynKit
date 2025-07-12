@@ -53,6 +53,10 @@ public class HelloApplication extends Application {
     static ScrollPane module1Scroll;
     static ScrollPane module2Scroll;
 
+    static UpstreamModel um;
+    static ModuleModel mm1;
+    static ModuleModel mm2;
+
     @Override
     public void start(Stage stage) throws IOException {
         try {
@@ -165,16 +169,16 @@ public class HelloApplication extends Application {
         module1Tab.setContent(module1Scroll);
         module2Tab.setContent(module2Scroll);
 
-        UpstreamModel um = new UpstreamModel();
+        um = new UpstreamModel();
         um.parseCommits(files[0]);
 
-        ModuleModel mm1 = new ModuleModel();
+        mm1 = new ModuleModel();
         mm1.moduleNo = 1;
         if(files[1] != null) {
             mm1.parseCommits(files[1]);
             setIndex(um, mm1, 0);
         }
-        ModuleModel mm2 = new ModuleModel();
+        mm2 = new ModuleModel();
         mm2.moduleNo = 2;
         if(files[2] != null) {
             mm2.parseCommits(files[2]);
@@ -199,7 +203,11 @@ public class HelloApplication extends Application {
         for(int i = 0; i < um.commits.size(); i++) {
             for(int j = 0; j < count; j++) {
                 if(check[j]) continue;
-                if(um.commits.get(i).message.equals(mm.commits.get(j).message)) {
+
+                // Strict comparison to make sure it was really cherry-picked not manual commit.
+                if(um.commits.get(i).message.equals(mm.commits.get(j).message) &&
+                        um.commits.get(i).author.equals(mm.commits.get(j).author) &&
+                        um.commits.get(i).date.equals(mm.commits.get(j).date)) {
                     check[j] = true;
                     um.commits.get(i).synced = Commit.Sync.YES;
                     um.indices.get(i).module = idx;
@@ -499,6 +507,14 @@ public class HelloApplication extends Application {
     }
 
     boolean commitExist(Commit c, String dir) {
+        // TODO: take list of commits starting from latest Kernel/trutils commit hash uploaded. then search.
+        // call api which will return the module given commit hash.
+
+        if (dir.equals(KERNEL_DIR)) {
+            // ModuleModel model = loadGitHistory(dir, KERNE_SYNC_branch, kernelmodule.hashcode);
+        } else {
+
+        }
 
         return false;
     }
